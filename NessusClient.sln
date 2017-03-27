@@ -5,8 +5,6 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NessusClient", "NessusClient\NessusClient.csproj", "{D02149D9-44A0-4543-B4AC-2C5C746B5A80}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NessusClient.Test", "NessusClient.Test\NessusClient.Test.csproj", "{FB51212F-DAE4-46C8-BF4B-EC42A0D18975}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,10 +15,6 @@ Global
 		{D02149D9-44A0-4543-B4AC-2C5C746B5A80}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D02149D9-44A0-4543-B4AC-2C5C746B5A80}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D02149D9-44A0-4543-B4AC-2C5C746B5A80}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FB51212F-DAE4-46C8-BF4B-EC42A0D18975}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FB51212F-DAE4-46C8-BF4B-EC42A0D18975}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FB51212F-DAE4-46C8-BF4B-EC42A0D18975}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FB51212F-DAE4-46C8-BF4B-EC42A0D18975}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

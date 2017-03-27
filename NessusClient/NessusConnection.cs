@@ -1,7 +1,5 @@
 ﻿using System;
-using System.IO;
 using System.Net;
-using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using System.Security;
@@ -78,8 +76,8 @@ namespace NessusClient
             {
                 using (var responseStream = response.GetResponseStream())
                 {
-                    var js = new DataContractJsonSerializer(typeof(Nessus6SessionToken));
-                    var obj = (Nessus6SessionToken) js.ReadObject(responseStream);
+                    var js = new DataContractJsonSerializer(typeof(NessusSessionToken));
+                    var obj = (NessusSessionToken) js.ReadObject(responseStream);
                     _token = obj.Token;
                 }
             }            
@@ -144,7 +142,7 @@ namespace NessusClient
             Dispose(false);
         }
         [DataContract]
-        private class Nessus6SessionToken
+        private class NessusSessionToken
         {
             [DataMember(Name = "token")]
             public string Token { get; set; }

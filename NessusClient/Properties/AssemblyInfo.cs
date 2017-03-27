@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("NessusClient")]
-[assembly: AssemblyDescription("Provides wrappers for Tenable Nessus 6.x REST API")]
+[assembly: AssemblyDescription("Wrapper for Tenable Nessus 6.x REST API")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Vladyslav Ignatenko")]
 [assembly: AssemblyProduct("NessusClient")]

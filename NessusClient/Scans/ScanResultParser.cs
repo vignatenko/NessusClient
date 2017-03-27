@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Linq;
 
 namespace NessusClient.Scans
@@ -14,7 +12,7 @@ namespace NessusClient.Scans
         public static ScanResult Parse(Stream stream)
         {
             var doc = XDocument.Load(stream);
-            if (doc == null || doc.Root == null)
+            if (doc?.Root == null)
                 throw new NessusException("Invalid report");
 
             var root = doc.Root;

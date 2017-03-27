@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Runtime.Serialization.Json;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -86,7 +85,7 @@ namespace NessusClient.Scans
             using (var stream = res.GetResponseStream())
             {
                 var js = new DataContractJsonSerializer(typeof(NessusExportFile));
-                // ReSharper disable once AssignNullToNotNullAttribute
+                
                 exportFile = (NessusExportFile)js.ReadObject(stream);
             }
             return exportFile.File;
@@ -157,24 +156,7 @@ namespace NessusClient.Scans
             }
             
         }
-        public static async Task<Scan> ImportAsync(this INessusConnection c, string filePath)
-        {
-            var serverFileName = await c.UploadFileAsync( filePath);
-            var request = c.CreateRequest("scans/import", WebRequestMethods.Http.Post);
-            using (var rs = request.GetRequestStream())
-            {
-                var bytes = Encoding.UTF8.GetBytes($"{{\"file\": \"{serverFileName}\"}}");
-                await rs.WriteAsync(bytes, 0, bytes.Length);
-            }
-            NessusImportResult importResult;
-            using (var responseStream = (await request.GetResponseAsync()).GetResponseStream())
-            {
-                var js = new DataContractJsonSerializer(typeof(NessusImportResult));
-                importResult = (NessusImportResult) js.ReadObject(responseStream);
-            }
-            return new Scan(importResult.Scan.Id, importResult.Scan.Name, importResult.Scan.LastModificationDate );
-            
-        }
+       
         private static async Task WaitForExportCompletion(this INessusConnection c,
             int scanId,
             int fileId,
@@ -210,52 +192,7 @@ namespace NessusClient.Scans
 
             return downloadRes.GetResponseStream();
 
-        }
-        private static async Task<string> UploadFileAsync(this INessusConnection c,  string filePath)
-        {
-            string serverFileName;
-            var request = c.CreateRequest("file/upload", WebRequestMethods.Http.Post);
-
-            var encoding = Encoding.UTF8;
-            var boundary = "------------------------" + DateTime.Now.Ticks;
-
-
-            var fileHeaderFormat =
-                $"--{boundary}\r\nContent-Disposition: form-data; name=\"Filedata\"; filename=\"{Path.GetFileName(filePath)}\";\r\nContent-Type: application/octet-stream\r\n\r\n";
-
-            request.ContentType = "multipart/form-data; boundary=" + boundary;
-
-
-            using (var stream = await request.GetRequestStreamAsync())
-            {
-                var data = encoding.GetBytes(fileHeaderFormat);
-                await stream.WriteAsync(data, 0, data.Length);
-
-                using (var sourceStream = File.OpenRead(filePath))
-                {
-                    await sourceStream.CopyToAsync(stream);
-                }
-                await stream.FlushAsync();
-            }
-            using (var response = (HttpWebResponse)await request.GetResponseAsync())
-            {
-                if (response.StatusCode != HttpStatusCode.OK)
-                {
-                    throw new NessusException($"Unable to upload file {filePath}. Error: {response.StatusCode}");
-                }
-
-                using (var stream = response.GetResponseStream())
-                {
-                    var js = new DataContractJsonSerializer(typeof(NessusReportUploadStatus));
-                    
-                    var obj = (NessusReportUploadStatus)js.ReadObject(stream);
-                    serverFileName = obj.FileUploaded;
-                }
-            }
-
-            return serverFileName;
-        }
-
+        }       
         
         private static IEnumerable<Scan> ReadScans(Stream reader)
         {
