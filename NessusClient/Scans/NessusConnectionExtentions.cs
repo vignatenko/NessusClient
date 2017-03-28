@@ -11,31 +11,31 @@ namespace NessusClient.Scans
 {
     public static class NessusConnectionExtentions
     {
-        public static async Task<IEnumerable<Scan>> GetScansAsync(this INessusConnection c)
+        
+        public static async Task<IEnumerable<Scan>> GetScansAsync(this INessusConnection conn, CancellationToken cancellationToken)
         {                        
-            using (var response = await c.CreateRequest("scans").GetResponseAsync())
+            using (var response = await conn.CreateRequest("scans", WebRequestMethods.Http.Get, cancellationToken).GetResponseAsync())
             using (var stream = response.GetResponseStream())
             {
-                return ReadScans(stream);
-                
+                return ReadScans(stream);               
             }           
         }
 
-        public static async Task<IEnumerable<ScanHistory>> GetAllScanHistoriesAsync(this INessusConnection c)
+        public static async Task<IEnumerable<ScanHistory>> GetAllScanHistoriesAsync(this INessusConnection conn, CancellationToken cancellationToken)
         {
-            var scans = await c.GetScansAsync();
-            var result = new List<ScanHistory>();
+            var scans = await conn.GetScansAsync(cancellationToken);
+            var result = new List<ScanHistory>();            
             foreach (var scan in scans)
             {
-                result.AddRange(await c.GetScanHistoryAsync(scan.Id));
+                result.AddRange(await conn.GetScanHistoryAsync(scan.Id, cancellationToken));
             }
             return result;
         }
 
-        public static async Task<IEnumerable<ScanHistory>> GetScanHistoryAsync(this INessusConnection c, int scanId)
+        public static async Task<IEnumerable<ScanHistory>> GetScanHistoryAsync(this INessusConnection conn, int scanId, CancellationToken cancellationToken)
         {
             NessusScanDetails obj;
-            using (var response = await c.CreateRequest($"scans/{scanId}").GetResponseAsync())
+            using (var response = await conn.CreateRequest($"scans/{scanId}", WebRequestMethods.Http.Get, cancellationToken).GetResponseAsync())
             using (var stream = response.GetResponseStream())
             {
                 var js = new DataContractJsonSerializer(typeof(NessusScanDetails));
@@ -48,9 +48,9 @@ namespace NessusClient.Scans
                         obj.Info.Name,
                         historyItem.LastModificationDate, historyItem.HistoryId));
         }
-        public static async Task<int> BeginExportAsync(this INessusConnection c, int scanId, int historyId, ExportFormat exportFormat = ExportFormat.Nessus)
+        public static async Task<int> BeginExportAsync(this INessusConnection conn, int scanId, int historyId, ExportFormat exportFormat, CancellationToken cancellationToken)
         {
-            var req = c.CreateRequest($"scans/{scanId}/export", WebRequestMethods.Http.Post);
+            var req = conn.CreateRequest($"scans/{scanId}/export", WebRequestMethods.Http.Post, cancellationToken);
                         
             using (var stream = await req.GetRequestStreamAsync())
             {
@@ -91,9 +91,9 @@ namespace NessusClient.Scans
             return exportFile.File;
         }
 
-        public static async Task<bool> IsExportCompletedAsync(this INessusConnection c, int scanId, int fileId)
+        public static async Task<bool> IsExportCompletedAsync(this INessusConnection conn, int scanId, int fileId, CancellationToken cancellationToken)
         {
-            var statReq = c.CreateRequest($"scans/{scanId}/export/{fileId}/status");
+            var statReq = conn.CreateRequest($"scans/{scanId}/export/{fileId}/status", WebRequestMethods.Http.Get, cancellationToken);
 
             using (var statRes = (HttpWebResponse) await statReq.GetResponseAsync())
             {
@@ -118,46 +118,46 @@ namespace NessusClient.Scans
                 }
             }
         }
-        public static async Task DownloadAsync(this INessusConnection c, int scanId, int fileId, Stream targetStream)
+        public static async Task DownloadAsync(this INessusConnection conn, int scanId, int fileId, Stream targetStream, CancellationToken cancellationToken)
         {            
-            using (var downloadStream = await c.DownloadAsync(scanId, fileId))
+            using (var downloadStream = await conn.DownloadAsync(scanId, fileId, cancellationToken))
             {
                 await downloadStream.CopyToAsync(targetStream);
             }
         }
-        
 
-        public static async Task ExportAsync(this INessusConnection c,
+
+        public static async Task ExportAsync(this INessusConnection conn,
             int scanId,
             int historyId,
-            CancellationToken  cancellationToken,
             ExportFormat exportFormat,
-            Stream targetStream)
+            Stream targetStream,
+            CancellationToken cancellationToken)
         {
-            var fileId = await c.BeginExportAsync(scanId, historyId, exportFormat);
+            var fileId = await conn.BeginExportAsync(scanId, historyId, exportFormat, cancellationToken);
 
-            await c.WaitForExportCompletion(scanId, fileId, cancellationToken);
+            await conn.WaitForExportCompletion(scanId, fileId, cancellationToken);
 
-            await c.DownloadAsync(scanId, fileId, targetStream);
+            await conn.DownloadAsync(scanId, fileId, targetStream, cancellationToken);
         }
 
-        public static async Task<ScanResult> GetScanResultAsync(this INessusConnection c,
+        public static async Task<ScanResult> GetScanResultAsync(this INessusConnection conn,
            int scanId,
            int historyId,
            CancellationToken cancellationToken)
         {
-            var fileId = await c.BeginExportAsync(scanId, historyId);
+            var fileId = await conn.BeginExportAsync(scanId, historyId, ExportFormat.Nessus, cancellationToken);
 
-            await c.WaitForExportCompletion(scanId, fileId, cancellationToken);
+            await conn.WaitForExportCompletion(scanId, fileId, cancellationToken);
             
-            using (var stream = await c.DownloadAsync(scanId, fileId))
+            using (var stream = await conn.DownloadAsync(scanId, fileId, cancellationToken))
             {
                 return ScanResultParser.Parse(stream);
             }
             
         }
        
-        private static async Task WaitForExportCompletion(this INessusConnection c,
+        private static async Task WaitForExportCompletion(this INessusConnection conn,
             int scanId,
             int fileId,
             CancellationToken cancellationToken)
@@ -167,14 +167,14 @@ namespace NessusClient.Scans
             for (;;)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                if (await c.IsExportCompletedAsync(scanId, fileId))
+                if (await conn.IsExportCompletedAsync(scanId, fileId, cancellationToken))
                     break;
                 await Task.Delay(timeoutBetweenAttempts, cancellationToken);
             }
         }
-        private static async Task<Stream> DownloadAsync(this INessusConnection c, int scanId, int fileId)
+        private static async Task<Stream> DownloadAsync(this INessusConnection conn, int scanId, int fileId, CancellationToken cancellationToken)
         {
-            var downloadReq = c.CreateRequest($"scans/{scanId}/export/{fileId}/download");
+            var downloadReq = conn.CreateRequest($"scans/{scanId}/export/{fileId}/download", WebRequestMethods.Http.Get, cancellationToken);
 
             var downloadRes = (HttpWebResponse)await downloadReq.GetResponseAsync();
 

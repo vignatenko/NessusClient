@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Net;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
@@ -48,7 +49,10 @@ namespace NessusClient
             const string bodySuffix = "\"}";
 
             r.ContentLength = bytes.Length + _password.Length + bodySuffix.Length;
-            
+            if (cancellationToken != null)
+            {
+                cancellationToken.Register(wr => ((WebRequest) wr).Abort(), r);
+            }
             using (var rs = await r.GetRequestStreamAsync())
             {
                 
@@ -84,24 +88,27 @@ namespace NessusClient
 
         }
 
-        public async Task CloseAsync()
+        public async Task CloseAsync(CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(_token))
                 return;
 
-            var request = CreateRequest("session", "DELETE");
+            var request = CreateRequest("session", "DELETE", cancellationToken);
             _token = null;
             await request.GetResponseAsync();
         }
 
-        public WebRequest CreateRequest(string relativeEndpointUrl, string httpMethod = "GET")
+        public WebRequest CreateRequest(string relativeEndpointUrl, string httpMethod, CancellationToken cancellationToken)
         {           
             var webRequest = CreateUnauthorizedRequest(relativeEndpointUrl, httpMethod);
             
             webRequest.Headers["X-Cookie"] = $"token={_token}";
 
             webRequest.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
-            
+            if (cancellationToken != null)
+            {
+                cancellationToken.Register(wr => ((WebRequest) wr).Abort(), webRequest);
+            }
             return webRequest;
         }
 
@@ -124,10 +131,20 @@ namespace NessusClient
 
         protected virtual void Dispose(bool disposing)
         {
-            
-            if (disposing)
+            if (!disposing)
+                return;
+
+            try
             {
-                CloseAsync().Wait();
+                CloseAsync(CancellationToken.None).Wait(TimeSpan.FromSeconds(3));
+            }
+            catch (AggregateException e)
+            {
+                Debug.Fail(e.Flatten().InnerException?.Message);
+            }
+            catch (Exception e)
+            {
+                Debug.Fail(e.Message);
             }
         }
 

@@ -3,26 +3,26 @@
 namespace NessusClient.Scans
 {
     [DataContract]
-    class Nessus6SessionToken
+    internal class NessusSessionToken
     {
         [DataMember(Name = "token")]
         public string Token { get; set; }
     }
     [DataContract]
-    class NessusScanList
+    internal class NessusScanList
     {
         [DataMember(Name = "scans")]
         public NessusScanListItem[] Scans { get; set; }
     }
     [DataContract]
-    class NessusImportResult
+    internal class NessusImportResult
     {
         [DataMember(Name = "scan")]
         public NessusScanListItem Scan { get; set; }
     }
 
     [DataContract]
-    class NessusScanListItem
+    internal class NessusScanListItem
     {
         [DataMember(Name = "id")]
         public int Id { get; set; }
@@ -41,7 +41,7 @@ namespace NessusClient.Scans
 
     }
     [DataContract]
-    class NessusScanDetails
+    internal class NessusScanDetails
     {
         [DataContract]
         public class ScanInfo
@@ -58,7 +58,7 @@ namespace NessusClient.Scans
     }
 
     [DataContract]
-    class NessusScanHistoryItem
+    internal class NessusScanHistoryItem
     {
         [DataMember(Name = "history_id")]
         public int HistoryId { get; set; }
@@ -74,7 +74,7 @@ namespace NessusClient.Scans
     }
 
     [DataContract]
-    class NessusExportFileRequest
+    internal class NessusExportFileRequest
     {
         [DataMember(Name = "format")]
         public string Format { get; set; }
@@ -87,14 +87,14 @@ namespace NessusClient.Scans
 
     }
     [DataContract]
-    class NessusExportFile
+    internal class NessusExportFile
     {
         [DataMember(Name = "file")]
         public int File { get; set; }
 
     }
     [DataContract]
-    class NessusExportFileStatus
+    internal class NessusExportFileStatus
     {
         [DataMember(Name = "status")]
         public string Status { get; set; }
@@ -102,14 +102,14 @@ namespace NessusClient.Scans
     }
 
     [DataContract]
-    class NessusReportUploadStatus
+    internal class NessusReportUploadStatus
     {
         [DataMember(Name = "fileuploaded")]
         public string FileUploaded { get; set; }
 
     }
     [DataContract]
-    class NessusScanCreationResponse
+    internal class NessusScanCreationResponse
     {
         [DataContract]
         public class ScanData

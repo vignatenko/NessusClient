@@ -7,7 +7,7 @@ using System.Xml.Linq;
 
 namespace NessusClient.Scans
 {
-    class ScanResultParser
+    internal class ScanResultParser
     {
         public static ScanResult Parse(Stream stream)
         {

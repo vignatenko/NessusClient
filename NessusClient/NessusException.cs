@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 namespace NessusClient
 {
     [Serializable]
-    class NessusException : Exception
+    internal class NessusException : Exception
     {
         public NessusException()
         {

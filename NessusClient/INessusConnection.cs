@@ -8,7 +8,7 @@ namespace NessusClient
     public interface INessusConnection: IDisposable
     {
         Task OpenAsync(CancellationToken cancellationToken);
-        Task CloseAsync();
-        WebRequest CreateRequest(string relativeEndpointUrl, string httpMethod = WebRequestMethods.Http.Get);
+        Task CloseAsync(CancellationToken cancellationToken);
+        WebRequest CreateRequest(string relativeEndpointUrl, string httpMethod, CancellationToken cancellationToken);
     }
 }
