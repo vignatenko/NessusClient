@@ -1,18 +1,20 @@
-# Tenable Nessus Client
+# .NET Nessus Client
 
-The C# wrapper for [Tenable Nessus 6.x](http://www.tenable.com/products/nessus-vulnerability-scanner) REST API.
-In this initial release it covers:
-* Getting list of scans
-* Getting history of scan
-* Getting vulnerabilities(as DTO) 
-* Export
+The C# library for asynchronously accessing the [Tenable Nessus 6.x](http://www.tenable.com/products/nessus-vulnerability-scanner) REST API.
 
+This initial release covers:
+* [Getting list of scans](#listOfScans)
+* [Getting history of scan](#scanHistory)
+* [Getting vulnerabilities(as POCOs) ](#loadVulns)
+* [Export](#export)
+
+Fill free to post feature requests.
 
 
 ### Installing
 
 
-Using [Nuget](https://www.nuget.org/packages/NessusClient/1.0.1.4042)
+Using Nuget
 ```
 Install-Package NessusClient
 ```
@@ -21,10 +23,28 @@ Install-Package NessusClient
 
 Core interface of the client is ```INessusConnection```.
 
-There is default implementation of this interface  - the ```NessusConnection``` class.
+
+ The ```INessusConnection``` provides 3 methods.
+```CSharp
+public interface INessusConnection: IDisposable
+{
+    Task OpenAsync(CancellationToken cancellationToken);
+
+    Task CloseAsync(CancellationToken cancellationToken);
+
+    WebRequest CreateRequest(string relativeEndpointUrl, 
+                             string httpMethod, 
+                             CancellationToken cancellationToken);
+}
+```
+
+
+There is default implementation of this interface  - the [```NessusConnection```](NessusClient/NessusConnection.cs) class.
+
+Rest of functionality is implemented as an extention methods in [```Scans\NessusConnectionExtentions.cs```](NessusClient/Scans/NessusConnectionExtentions.cs). 
 
 Typical usage:
-```
+```CSharp
 async Task SomeMethodAsync(CancellationToken cancellationToken)
 {
 	using(var conn = new NessusConnection(server, port, userName, password))
@@ -34,29 +54,21 @@ async Task SomeMethodAsync(CancellationToken cancellationToken)
 	}
 }
 ```
- The ```INessusConnection``` provides 3 methods.
+
+NOTE. To easily convert password stored in ```byte[]``` to ```SecureString``` the [SecureStringExtentions](NessusClient/SecureStringExtentions.cs) can be used:
+```CSharp
+var secret = new byte[]{...};
+var secureStr = secret.ToSecureString();
 ```
-public interface INessusConnection: IDisposable
-{
-    Task OpenAsync(CancellationToken cancellationToken);
-    Task CloseAsync(CancellationToken cancellationToken);
-    WebRequest CreateRequest(string relativeEndpointUrl, string httpMethod, CancellationToken cancellationToken);
-}
-```
-
-
-Rest of functionality is implemented as an extention methods in ```Scans\NessusConnectionExtentions.cs```. 
-
 
 ## Examples
 
-
-
+<a name="listOfScans"></a>
 ### Getting list of scans
 
 
 
-```
+```CSharp
 async Task<IEnumerable<Scan>> GetScansAsync(CancellationToken cancellationToken)
 {
 	using(var conn = new NessusConnection(server, port, userName, password))
@@ -67,20 +79,21 @@ async Task<IEnumerable<Scan>> GetScansAsync(CancellationToken cancellationToken)
 }
 ```
 
-The Scan class is defined as 
-```
+The [Scan](NessusClient/Scans/Scan.cs) class is holding minumum  information about the scan
+```CSharp
 public class Scan
 {
-
+.....
         public int Id { get; }        
         public string Name { get; }
         public DateTimeOffset LastUpdateDate { get; }
 }
 ```
 
-### Getting scan history
+<a name="scanHistory"></a>
+### Getting scan's history
 
-```
+```CSharp
 async Task LoadAllScansHistoryAsync(CancellationToken cancellationToken)
 {
 	using(var conn = new NessusConnection(server, port, userName, password))
@@ -102,10 +115,10 @@ async Task LoadAllScansHistoryAsync(CancellationToken cancellationToken)
 	}
 }
 ```
-
+<a name="loadVulns"></a>
 ### Load Vulnerabilities
 
-```
+```CSharp
 //Caution: getting all vulnerabilties may take a long time 
 async Task<IEnumerable<ScanResult>> GetAllVulnerabilitiesAsync(CancellationToken cancellationToken)
 {
@@ -113,7 +126,7 @@ async Task<IEnumerable<ScanResult>> GetAllVulnerabilitiesAsync(CancellationToken
 	{
 		await conn.OpenAsync(cancellationToken);
 
-		//first, getting list of scans...
+		//first, get all scan histories...
 		var historyRecords =  await conn.GetAllScanHistoriesAsync(cancellationToken);
 
 		var result = new List<ScanResult>(historyRecords.Count())
@@ -133,7 +146,7 @@ async Task<IEnumerable<ScanResult>> GetAllVulnerabilitiesAsync(CancellationToken
 
 The ```ScanResult``` class contains list of ```Host```
 
-```
+```CSharp
 public class ScanResult
 {
     public string Name { get; set; }
@@ -142,7 +155,7 @@ public class ScanResult
 }
 ```
 The [```Host```](NessusClient/Scans/Host.cs) class contains list of [```Vulnerability```](NessusClient/Scans/Vulnerability.cs):
-```
+```CSharp
  public class Host
  {
 //other properties omited
@@ -152,11 +165,10 @@ The [```Host```](NessusClient/Scans/Host.cs) class contains list of [```Vulnerab
 
 Flattening the ```IEnumerable<ScanResult>``` gives plain list of vulneraiblities.
 
-
+<a name="export"></a>
 ### Export Scan
 
-```
-
+```CSharp
 using(var conn = new NessusConnection(server, port, userName, password))
 {
 	await conn.OpenAsync(cancellationToken);
@@ -168,18 +180,7 @@ using(var conn = new NessusConnection(server, port, userName, password))
 					ExportFormat.Html, 
 					stream, 
 					cancellationToken);
-	}
-	var result = new List<ScanResult>(historyRecords.Count())
-
-	foreach(var historyItem in  historyRecords )
-	{
-		var scanResult = await conn.GetScanResultAsync(historyItem.Id, 
-						historyItem.HistoryId, 
-						cancellationToken);
-
-		result.Add(scanResult);
-	}
-	return result;
+	}	
 }
 
 ```
