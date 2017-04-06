@@ -1,4 +1,4 @@
-# .NET Nessus Client
+# NessusClient - Nessus 6.x REST API Client Library for .NET
 
 The C# library for asynchronously accessing the [Tenable Nessus 6.x](http://www.tenable.com/products/nessus-vulnerability-scanner) REST API.
 
